@@ -9,12 +9,12 @@ variable "tf_var_management_Region" {
   default = "norwayeast"
 }
 
-variable "tf_var_management_storageaccountName" {
+variable "tf_var_management_StorageAccountName" {
   type        = string
   description = "Storage account created by bootstrap to hold all Terraform state"
 }
 
-variable "tf_var_management_container" {
+variable "tf_var_management_ContainerName" {
   type        = string
   description = "Container created by bootstrap to hold all Terraform state"
 }

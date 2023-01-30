@@ -11,7 +11,7 @@ resource "azurerm_resource_group" "tfstate" {
 }
 
 resource "azurerm_storage_account" "tfstate" {
-  name                     = var.tf_var_management_storageaccountName
+  name                     = var.tf_var_management_StorageAccountName
   resource_group_name      = azurerm_resource_group.tfstate.name
   location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
@@ -24,7 +24,7 @@ resource "azurerm_storage_account" "tfstate" {
 }
 
 resource "azurerm_storage_container" "tfstate" {
-  name                  = var.tf_var_management_container
+  name                  = var.tf_var_management_ContainerName
   storage_account_name  = azurerm_storage_account.tfstate.name
   container_access_type = "private"
 }

@@ -56,13 +56,6 @@ function validate_bootstrap_step(){
 
 # Set up Terraform
 function terraform_init(){
-    BACKEND_FILE="$(find "$(cd ..; pwd)" -name "backend.tf" 2>/dev/null)"
-
-    sed -i "s/resource_group_name  = .*/resource_group_name  = \"$tf_var_management_ResourceGroup\"/g" $BACKEND_FILE
-    sed -i "s/storage_account_name = .*/storage_account_name = \"$tf_var_management_storageaccountName\"/g" $BACKEND_FILE
-    sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_container\"/g" $BACKEND_FILE
-    sed -i "s/key                  = .*/key                  = \"$tf_var_state_name\"/g" $BACKEND_FILE
-
     echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
     cd $BOOTSTRAP_DIR
     terraform init -reconfigure

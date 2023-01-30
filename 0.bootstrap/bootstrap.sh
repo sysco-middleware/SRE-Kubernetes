@@ -45,16 +45,16 @@ function create_resource_group(){
 # Create Storage Account
 function create_storage_account(){
     echo -e "\n\e[34m»»» 💾 \e[96mCreating storage account\e[0m..."
-    az storage account create --resource-group $tf_var_management_ResourceGroup --name $tf_var_management_storageaccountName --location $tf_var_management_Region --kind StorageV2 --encryption-services blob --sku Standard_LRS -o table
-    ACCOUNT_KEY=$(az storage account keys list --resource-group $tf_var_management_ResourceGroup --account-name $tf_var_management_storageaccountName --query '[0].value' -o tsv)
+    az storage account create --resource-group $tf_var_management_ResourceGroup --name $tf_var_management_StorageAccountName --location $tf_var_management_Region --kind StorageV2 --encryption-services blob --sku Standard_LRS -o table
+    ACCOUNT_KEY=$(az storage account keys list --resource-group $tf_var_management_ResourceGroup --account-name $tf_var_management_StorageAccountName --query '[0].value' -o tsv)
     export ARM_ACCESS_KEY=$ACCOUNT_KEY
 }
 
 # Create Blob Container
 function create_blob_container(){
     echo -e "\n\e[34m»»» 🫙 \e[96m Creating blob container\e[0m..."
-    SA_ACCESS_KEY=$(az storage account keys list --resource-group $tf_var_management_ResourceGroup --account-name $tf_var_management_storageaccountName --query '[0].value' -o tsv)
-    az storage container create --account-name $tf_var_management_storageaccountName --name $tf_var_management_container --account-key $SA_ACCESS_KEY -o table
+    SA_ACCESS_KEY=$(az storage account keys list --resource-group $tf_var_management_ResourceGroup --account-name $tf_var_management_StorageAccountName --query '[0].value' -o tsv)
+    az storage container create --account-name $tf_var_management_StorageAccountName --name $tf_var_management_ContainerName --account-key $SA_ACCESS_KEY -o table
 }
 
 # Checks if initial config was done for 0-bootstrap step
@@ -74,12 +74,14 @@ function validate_bootstrap_step(){
 }
 
 function terraform_init(){
-    BACKEND_FILE="$(find "$(cd ..; pwd)" -name "backend.tf" 2>/dev/null)"
-
     sed -i "s/resource_group_name  = .*/resource_group_name  = \"$tf_var_management_ResourceGroup\"/g" $BACKEND_FILE
-    sed -i "s/storage_account_name = .*/storage_account_name = \"$tf_var_management_storageaccountName\"/g" $BACKEND_FILE
-    sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_container\"/g" $BACKEND_FILE
+    sed -i "s/storage_account_name = .*/storage_account_name = \"$tf_var_management_StorageAccountName\"/g" $BACKEND_FILE
+    sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_ContainerName\"/g" $BACKEND_FILE
     sed -i "s/key                  = .*/key                  = \"$tf_var_state_name\"/g" $BACKEND_FILE
+
+    echo -e "\n\e[34m»»» 📤 \e[96mUpdating the tfvars file with varibales from .env file...\e[0m..."
+    validate_env_file
+    sed "s/=/ = /g" $ENV_FILE | tee $TFVARS_FILE 2>&1 > /dev/null
 
     echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
     cd $BOOTSTRAP_DIR
@@ -91,13 +93,15 @@ function terraform_import_SA_RG_into_State(){
     echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
     cd $BOOTSTRAP_DIR
     terraform import azurerm_resource_group.tfstate "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$tf_var_management_ResourceGroup"
-    terraform import azurerm_storage_account.tfstate "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$tf_var_management_ResourceGroup/providers/Microsoft.Storage/storageAccounts/$tf_var_management_storageaccountName"
-    terraform import azurerm_storage_container.tfstate "https://$tf_var_management_storageaccountName.blob.core.windows.net/$tf_var_management_container"
+    terraform import azurerm_storage_account.tfstate "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$tf_var_management_ResourceGroup/providers/Microsoft.Storage/storageAccounts/$tf_var_management_StorageAccountName"
+    terraform import azurerm_storage_container.tfstate "https://$tf_var_management_StorageAccountName.blob.core.windows.net/$tf_var_management_ContainerName"
 }
 
 function main(){
     # variables used
     BOOTSTRAP_DIR="$(find "$(cd ..; pwd)" -name "0.bootstrap" 2>/dev/null)"
+    BACKEND_FILE="$(echo $BOOTSTRAP_DIR)/backend.tf"
+    TFVARS_FILE="$(echo $BOOTSTRAP_DIR)/terraform.tfvars"
     ENV_FILE="$(echo $BOOTSTRAP_DIR)/.env"
     CLEANUP_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/cleanup-rg.sh"
     VALIDATION_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/validate-requirements.sh"
