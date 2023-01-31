@@ -105,6 +105,8 @@ function main(){
     ENV_FILE="$(echo $BOOTSTRAP_DIR)/.env"
     CLEANUP_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/cleanup-rg.sh"
     VALIDATION_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/validate-requirements.sh"
+
+    validate_env_file
     
     # Run validatation script
     echo -e "\e[0m"
@@ -131,8 +133,6 @@ function main(){
         ;;
     esac
 
-    validate_env_file
-    
     validate_bootstrap_step
 
     # echo "......................................."

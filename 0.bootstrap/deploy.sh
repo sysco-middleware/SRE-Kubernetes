@@ -83,6 +83,8 @@ function main(){
     CLEANUP_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/cleanup-rg.sh"
     BOOTSTRAP_SCRIPT="$(find "$(cd ..; pwd)" -name "bootstrap.sh" 2>/dev/null)"
 
+    validate_env_file
+    
     # Run bootstrap script
     echo -e "\e[0m"
     read -p "- Have you run the bootstrap script ($BOOTSTRAP_SCRIPT) (y/n)? " answer
@@ -106,8 +108,6 @@ function main(){
             esac
         ;;
     esac
-
-    validate_env_file
 
     validate_bootstrap_step
 
