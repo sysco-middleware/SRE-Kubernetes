@@ -16,7 +16,7 @@ resource "azurerm_storage_account" "tfstate" {
   location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  allow_blob_public_access = false
+  #allow_blob_public_access = false
 
   tags = {
     environment = "poc"

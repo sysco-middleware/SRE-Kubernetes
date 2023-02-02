@@ -58,11 +58,13 @@ function validate_bootstrap_step(){
 function terraform_init(){
     echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
     cd $BOOTSTRAP_DIR
-    sed -i "s/subscription_id.*/subscription_id  = \"$SUBSCRIPTION_ID\"/g" $TFPROVIDER_FILE
-    sed -i "s/client_id.*/client_id  = \"$SERVICE_PRINCIPAL_ID\"/g" $TFPROVIDER_FILE
-    sed -i "s/client_secret.*/client_secret  = \"$SERVICE_PRINCIPAL_SECRET\"/g" $TFPROVIDER_FILE
-    sed -i "s/tenant_id.*/tenant_id  = \"$TENANT_ID\"/g" $TFPROVIDER_FILE
-    terraform init -reconfigure
+
+    export ARM_CLIENT_ID=$SERVICE_PRINCIPAL_ID
+    export ARM_CLIENT_SECRET=$SERVICE_PRINCIPAL_SECRET
+    export ARM_SUBSCRIPTION_ID=$SUBSCRIPTION_ID
+    export ARM_TENANT_ID=$TENANT_ID
+
+    terraform init
 }
 
 function terraform_plan(){

@@ -79,10 +79,10 @@ function terraform_init(){
     sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_ContainerName\"/g" $BACKEND_FILE
     sed -i "s/key                  = .*/key                  = \"$tf_var_state_name\"/g" $BACKEND_FILE
 
-    sed -i "s/subscription_id.*/subscription_id  = \"$SUBSCRIPTION_ID\"/g" $TFPROVIDER_FILE
-    sed -i "s/client_id.*/client_id  = \"$SERVICE_PRINCIPAL_ID\"/g" $TFPROVIDER_FILE
-    sed -i "s/client_secret.*/client_secret  = \"$SERVICE_PRINCIPAL_SECRET\"/g" $TFPROVIDER_FILE
-    sed -i "s/tenant_id.*/tenant_id  = \"$TENANT_ID\"/g" $TFPROVIDER_FILE
+    export ARM_CLIENT_ID=$SERVICE_PRINCIPAL_ID
+    export ARM_CLIENT_SECRET=$SERVICE_PRINCIPAL_SECRET
+    export ARM_SUBSCRIPTION_ID=$SUBSCRIPTION_ID
+    export ARM_TENANT_ID=$TENANT_ID
 
     echo -e "\n\e[34m»»» 📤 \e[96mUpdating the tfvars file with varibales from .env file...\e[0m..."
     validate_env_file
@@ -182,6 +182,7 @@ function main(){
 
     terraform_import_SA_RG_into_State
     
+
 }
 
 usage() {

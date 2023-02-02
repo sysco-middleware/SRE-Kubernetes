@@ -10,9 +10,4 @@ terraform {
 # Configure the Microsoft Azure Provider
 provider "azurerm" {
   features {}
-  
-  subscription_id  = "__CHANGE_ME__"
-  client_id  = "__CHANGE_ME__"
-  client_secret  = "__CHANGE_ME__"
-  tenant_id  = "__CHANGE_ME__"
 }
