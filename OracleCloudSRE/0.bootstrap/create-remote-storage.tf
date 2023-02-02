@@ -1,15 +1,16 @@
 #
 # Core management resources
 #
-resource "azurerm_resource_group" "tfstate" {
-  name     = var.tf_var_management_ResourceGroup
-  location = var.tf_var_management_Region
+
+resource "oci_identity_compartment" "tf-compartment" {
+    compartment_id = var.tf_var_management_ParentCompartment_OCID
+    description = "Compartment for Terraform resources"
+    name = var.tf_var_management_Compartment
 }
 
 resource "oci_objectstorage_bucket" "tfstate" {
   compartment_id = var.tf_var_management_Compartment_OCID
   name           = var.tf_var_management_BucketName
+  namespace      = var.tf_var_management_BucketNS
   access_type    = var.tf_var_management_BucketAccess
 }
-
-

@@ -79,13 +79,18 @@ function terraform_init(){
     sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_ContainerName\"/g" $BACKEND_FILE
     sed -i "s/key                  = .*/key                  = \"$tf_var_state_name\"/g" $BACKEND_FILE
 
+    sed -i "s/subscription_id.*/subscription_id  = \"$SUBSCRIPTION_ID\"/g" $TFPROVIDER_FILE
+    sed -i "s/client_id.*/client_id  = \"$SERVICE_PRINCIPAL_ID\"/g" $TFPROVIDER_FILE
+    sed -i "s/client_secret.*/client_secret  = \"$SERVICE_PRINCIPAL_SECRET\"/g" $TFPROVIDER_FILE
+    sed -i "s/tenant_id.*/tenant_id  = \"$TENANT_ID\"/g" $TFPROVIDER_FILE
+
     echo -e "\n\e[34m»»» 📤 \e[96mUpdating the tfvars file with varibales from .env file...\e[0m..."
     validate_env_file
     sed "s/=/ = /g" $ENV_FILE | tee $TFVARS_FILE 2>&1 > /dev/null
 
     echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
     cd $BOOTSTRAP_DIR
-    terraform init -reconfigure
+    terraform init -upgrade
 }
 
 # Import the storage account & res group into state
@@ -102,6 +107,7 @@ function main(){
     BOOTSTRAP_DIR="$(find "$(cd ..; pwd)" -name "0.bootstrap" 2>/dev/null)"
     BACKEND_FILE="$(echo $BOOTSTRAP_DIR)/backend.tf"
     TFVARS_FILE="$(echo $BOOTSTRAP_DIR)/terraform.tfvars"
+    TFPROVIDER_FILE="$(echo $BOOTSTRAP_DIR)/provider.tf"
     ENV_FILE="$(echo $BOOTSTRAP_DIR)/.env"
     CLEANUP_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/cleanup-rg.sh"
     VALIDATION_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/validate-requirements.sh"

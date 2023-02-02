@@ -151,11 +151,11 @@ function main(){
         ;;
     esac
 
-    # terraform_init
+    terraform_init
 
-    # terraform_plan
+    terraform_plan
 
-    # terraform_run
+    terraform_run
     
 }
 

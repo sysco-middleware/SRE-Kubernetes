@@ -19,3 +19,8 @@ variable "tf_var_management_ContainerName" {
   description = "Container created by bootstrap to hold all Terraform state"
 }
 
+variable "tf_var_state_name" {
+  type        = string
+  description = "Terraform state file name"
+}
+

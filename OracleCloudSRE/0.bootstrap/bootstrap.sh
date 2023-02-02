@@ -39,15 +39,36 @@ function validate_env_file(){
 # Create Compartment
 function create_compartment(){
     echo -e "\n\e[34m»»» 📦 \e[96mCreating Compartment\e[0m..."
-    oci iam compartment create --compartment-id $PARENT_COMPARTMENT_OCID --name $tf_var_management_Compartment --description "Created by Terrafrom for $tf_var_resource_prefix purpose"
+    # oci iam compartment create --compartment-id $PARENT_COMPARTMENT_OCID --name $tf_var_management_Compartment --description "Created by Terrafrom for $tf_var_resource_prefix purpose"
 }
 
 # Create Blob Container
 function create_object_storage_bucket(){
+
+    echo -e "\n\e[34m»»» ⏲️ \e[96mWaiting for Compartment to be ready\e[0m..."
+    sleep 10
+
+    # COMPARTMENT_STATUS="$(oci iam compartment list --compartment-id-in-subtree true --name $tf_var_management_Compartment | jq -r '.data[]."lifecycle-state"')"
+    COMPARTMENT_STATUS="NOT ACTIVE"
+    while [ "$COMPARTMENT_STATUS" != ACTIVE ];
+    do
+    echo -e "\n\e[34m»»» ⏲️ \e[96mWaiting for Compartment to be ready\e[0m..."
+    COMPARTMENT_STATUS="$(oci iam compartment list --compartment-id-in-subtree true --name $tf_var_management_Compartment | jq -r '.data[]."lifecycle-state"')"
+    echo -e "\t Compartment $tf_var_management_Compartment is $COMPARTMENT_STATUS"
+    sleep 5
+    done
+
     echo -e "\n\e[34m»»» 🫙 \e[96m Creating Object Storage Bucket\e[0m..."
-    # need a code to wait till the compartment is available fully
-    MGMT_COMPARTMENT_ID="$(oci iam compartment list --compartment-id-in-subtree true --name $tf_var_management_Compartment | jq -r '.data[].id')"
-    oci os bucket create --compartment-id $MGMT_COMPARTMENT_ID --name $tf_var_management_BucketName --versioning Enabled
+    tf_var_management_CompartmentID="$(oci iam compartment list --compartment-id-in-subtree true --name $tf_var_management_Compartment | jq -r '.data[].id')"
+    # oci os bucket create --compartment-id $tf_var_management_CompartmentID --name $tf_var_management_BucketName --versioning Enabled
+    tf_var_management_BucketNS="$(oci os bucket get --bucket-name $tf_var_management_BucketName | jq -r '.data.namespace')"
+    
+    # echo -e "\n\e[34m»»» 🔑 \e[96m Creating Pre-auth request\e[0m..."
+    # tf_var_management_BucketID="$(oci os bucket get --bucket-name $tf_var_management_BucketName | jq -r '.data.id')"
+    # EXPIRE_DATE=$(date -d '+10 month' --rfc-3339=ns | sed 's/ /T/; s/\(\....\).*\([+-]\)/\1\2/g')
+    # oci os preauth-request create --bucket-name $tf_var_management_BucketID --name $tf_var_management_BucketAuth --access-type $tf_var_management_BucketAccess --time-expires $EXPIRE_DATE
+    # tf_var_management_BucketAuthID="$(oci os preauth-request list --all --bucket-name $tf_var_management_BucketName | jq -r '.data[].id')"
+    # oci os preauth-request get --bucket-name $tf_var_management_BucketID --par-id $tf_var_management_BucketAuthID
 }
 
 # Checks if initial config was done for 0-bootstrap step
@@ -67,10 +88,15 @@ function validate_bootstrap_step(){
 }
 
 function terraform_init(){
-    # sed -i "s/resource_group_name  = .*/resource_group_name  = \"$tf_var_management_ResourceGroup\"/g" $BACKEND_FILE
-    # sed -i "s/storage_account_name = .*/storage_account_name = \"$tf_var_management_StorageAccountName\"/g" $BACKEND_FILE
-    # sed -i "s/container_name       = .*/container_name       = \"$tf_var_management_ContainerName\"/g" $BACKEND_FILE
-    # sed -i "s/key                  = .*/key                  = \"$tf_var_state_name\"/g" $BACKEND_FILE
+    sed -i "s/tf_var_management_ParentCompartment_OCID  = .*/tf_var_management_ParentCompartment_OCID  = \"$PARENT_COMPARTMENT_OCID\"/g" $TFVARS_FILE
+    sed -i "s/tf_var_management_CompartmentID  = .*/tf_var_management_CompartmentID  = \"$tf_var_management_CompartmentID\"/g" $TFVARS_FILE
+    sed -i "s/tf_var_management_BucketNS  = .*/tf_var_management_BucketNS  = \"$tf_var_management_BucketNS\"/g" $TFVARS_FILE
+
+
+
+    BUCKET_URL="https://objectstorage.${tf_var_management_Region}.oraclecloud.com/n/${tf_var_management_BucketNS}/b/${tf_var_management_BucketName}/o/${tf_var_management_TFStateFile}"
+    echo $BUCKET_URL
+    sed -i "s|address.*|address = \"$BUCKET_URL\"|g" $BACKEND_FILE
 
     echo -e "\n\e[34m»»» 📤 \e[96mUpdating the tfvars file with varibales from .env file...\e[0m..."
     validate_env_file
@@ -107,8 +133,6 @@ function main(){
     read -p "- Have you run the validation script ($VALIDATION_SCRIPT) (y/n)? " answer
     case ${answer:0:1} in
         y|Y )
-            echo -e "\n\e[34m»»» 📝 \e[96mUpdating $CLEANUP_SCRIPT with Resource Group name incase you want to cleanup later...\e[0m"
-            sed -i "s/DELETE_RG=.*/DELETE_RG=$tf_var_management_ResourceGroup/g" $CLEANUP_SCRIPT
         ;;
         * )
             read -p "- Do you want to run the validation script ($VALIDATION_SCRIPT) (y/n)? " answer
@@ -154,8 +178,6 @@ function main(){
     echo -e "\e[34m\t• \e[96mParent Compartment Name:       \e[33m$PARENT_COMPARTMENT_NAME\e[0m"
     echo -e "\e[34m\t• \e[96mmUser:                         \e[33m$SERVICE_PRINCIPAL_NAME\e[0m"
     echo -e "\e[34m\t• \e[96mRegion:                        \e[33m$REGION\e[0m\n"
-    echo -e "\n\e[34m»»» 📝 \e[96mNow you can start the bootstrap process using - $BOOTSTRAP_SCRIPT\e[0m"
-
     read -p "- Are these details correct, do you want to continue (y/n)? " answer
     case ${answer:0:1} in
         y|Y )
@@ -170,7 +192,7 @@ function main(){
 
     create_object_storage_bucket
 
-    # terraform_init
+    terraform_init
 
     # terraform_import_SA_RG_into_State
     

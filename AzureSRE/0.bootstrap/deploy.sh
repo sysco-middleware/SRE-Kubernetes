@@ -58,6 +58,10 @@ function validate_bootstrap_step(){
 function terraform_init(){
     echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
     cd $BOOTSTRAP_DIR
+    sed -i "s/subscription_id.*/subscription_id  = \"$SUBSCRIPTION_ID\"/g" $TFPROVIDER_FILE
+    sed -i "s/client_id.*/client_id  = \"$SERVICE_PRINCIPAL_ID\"/g" $TFPROVIDER_FILE
+    sed -i "s/client_secret.*/client_secret  = \"$SERVICE_PRINCIPAL_SECRET\"/g" $TFPROVIDER_FILE
+    sed -i "s/tenant_id.*/tenant_id  = \"$TENANT_ID\"/g" $TFPROVIDER_FILE
     terraform init -reconfigure
 }
 
@@ -80,6 +84,7 @@ function main(){
     # variables used
     BOOTSTRAP_DIR="$(find "$(cd ..; pwd)" -name "0.bootstrap" 2>/dev/null)"
     ENV_FILE="$(echo $BOOTSTRAP_DIR)/.env"
+    TFPROVIDER_FILE="$(echo $BOOTSTRAP_DIR)/provider.tf"
     CLEANUP_SCRIPT="$(echo $BOOTSTRAP_DIR)/scripts/cleanup-rg.sh"
     BOOTSTRAP_SCRIPT="$(find "$(cd ..; pwd)" -name "bootstrap.sh" 2>/dev/null)"
 
